@@ -35,6 +35,29 @@ def clamp(v, lo, hi, default):
         return default
 
 
+def find_url(x):
+    """fal cevabında (images listesi, image nesnesi vb.) ilk görsel url'sini bul."""
+    if isinstance(x, dict):
+        u = x.get("url")
+        if isinstance(u, str) and u.startswith("http"):
+            return u
+        for k in ("images", "image", "output", "data"):
+            if k in x:
+                r = find_url(x[k])
+                if r:
+                    return r
+        for v in x.values():
+            r = find_url(v)
+            if r:
+                return r
+    elif isinstance(x, list):
+        for v in x:
+            r = find_url(v)
+            if r:
+                return r
+    return None
+
+
 def prepare(raw: bytes) -> str:
     """Fotoğraf -> 1024x1024 gri kare (data URI)."""
     img = ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("L")
@@ -85,7 +108,9 @@ def run_job(job_id: str, raw: bytes, p: dict):
         if not r.ok:
             raise RuntimeError(f"fal sonuç hatası: {r.text[:300]}")
         data = r.json()
-        url = data["images"][0]["url"]
+        url = find_url(data)
+        if not url:
+            raise RuntimeError("Sonuç biçimi tanınmadı: " + json.dumps(data)[:300])
         JOBS[job_id] = {"status": "done", "image_url": url}
     except Exception as e:  # noqa: BLE001
         JOBS[job_id] = {"status": "error", "error": str(e)}
