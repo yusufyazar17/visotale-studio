@@ -67,6 +67,7 @@ details summary{cursor:pointer;font-size:13.5px;color:var(--gm);font-weight:500}
   <div class="sec"><details><summary>Gelişmiş ayarlar</summary>
     <label class="l">Prompt (bu stile özel, düzenleyebilirsin)</label><textarea id="prompt"></textarea>
     <label class="l">Negatif prompt</label><textarea id="neg"></textarea>
+    <label class="l">Yüz yerleşimi</label><select id="layout"><option value="cutout">Arka planı sil + oval (önerilen)</option><option value="none">Tüm tuval</option></select>
     <label class="l">Adım sayısı</label><input id="steps" type="number" min="10" max="50" value="20">
     <label class="l">Guidance</label><input id="guid" type="number" step="0.5" value="7.5">
     <label class="l">Seed benzeri tekrar sayısı (aynı ayarla kaç görsel)</label><input id="rep" type="number" min="1" max="4" value="1"></details></div>
@@ -109,7 +110,7 @@ $('go').onclick=function(){
  function one(){var fd=new FormData();fd.append('password',$('pw').value);fd.append('style',cur);fd.append('file',file);
   fd.append('prompt',$('prompt').value);fd.append('negative_prompt',$('neg').value);
   fd.append('conditioning_scale',(DEF[cur].conditioning_scale+delta).toFixed(2));
-  fd.append('guidance_scale',$('guid').value);fd.append('num_inference_steps',$('steps').value);
+  fd.append('guidance_scale',$('guid').value);fd.append('layout',$('layout').value);fd.append('num_inference_steps',$('steps').value);
   
   fetch('/api/generate',{method:'POST',body:fd}).then(function(r){return r.json().then(function(j){return{s:r.status,b:j}})}).then(function(x){
    if(!x.b.ok){msg(x.b.error||'Hata',true);fin();return}

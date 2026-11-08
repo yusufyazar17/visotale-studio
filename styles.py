@@ -23,5 +23,7 @@ STYLES = {
         ),
         "negative": NEGATIVE_BASE + ", studio photo, smooth digital art, flat colors, pastel, picture frame, border, second vase, muted dull colors",
         "scale": 1.15, "guidance": 7.5, "steps": 20,
+        "layout": "cutout",
+        "layout_params": {"cx": 0.50, "cy": 0.38, "w": 0.88, "h": 0.66, "feather": 0.10, "bg": 24, "size": 0.68, "halo": 150, "dy": 0.02, "pad_top": 1.0, "fit": 0.92},
     },
 }

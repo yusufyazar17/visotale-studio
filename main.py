@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from PIL import Image, ImageOps
 
 from styles import STYLES
+from image_prep import prepare_conditioning_image, to_data_uri
 from ui import STUDIO_HTML
 
 FAL_KEY = os.environ.get("FAL_KEY", "")
@@ -72,12 +73,22 @@ def prepare(raw: bytes) -> str:
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
+def build_conditioning(raw: bytes, p: dict) -> str:
+    if p.get("layout") == "cutout":
+        try:
+            img = prepare_conditioning_image(raw, "cutout_strict", p.get("layout_params"))
+            return to_data_uri(img)
+        except Exception as e:  # arka plan silinemezse düz kareye dön
+            print("cutout başarısız, düz kare:", e, flush=True)
+    return prepare(raw)
+
+
 def run_job(job_id: str, raw: bytes, p: dict):
     try:
         if not FAL_KEY:
             raise RuntimeError("FAL_KEY tanımlı değil.")
         payload = {
-            "image_url": prepare(raw),
+            "image_url": build_conditioning(raw, p),
             "prompt": p["prompt"],
             "negative_prompt": p["negative"],
             "controlnet_conditioning_scale": p["scale"],
@@ -129,7 +140,7 @@ def studio():
             "prompt": v["prompt"], "negative_prompt": v["negative"],
             "conditioning_scale": v["scale"], "guidance_scale": v["guidance"],
             "num_inference_steps": v["steps"], "control_guidance_end": 1.0,
-            "layout": "none",
+            "layout": v.get("layout", "none"),
         }
         for k, v in STYLES.items()
     }
@@ -142,7 +153,7 @@ async def generate(
     password: str = Form(...), style: str = Form(...), file: UploadFile = File(...),
     prompt: str | None = Form(None), negative_prompt: str | None = Form(None),
     conditioning_scale: str | None = Form(None), guidance_scale: str | None = Form(None),
-    num_inference_steps: str | None = Form(None),
+    num_inference_steps: str | None = Form(None), layout: str | None = Form(None),
 ):
     global RUNS
     if not PASSWORD:
@@ -169,6 +180,8 @@ async def generate(
         "scale": clamp(conditioning_scale, 0.5, 1.6, base["scale"]),
         "guidance": clamp(guidance_scale, 1, 20, base["guidance"]),
         "steps": int(clamp(num_inference_steps, 10, 50, base["steps"])),
+        "layout": layout if layout in ("cutout", "none") else base.get("layout", "none"),
+        "layout_params": base.get("layout_params"),
     }
     job_id = uuid.uuid4().hex
     JOBS[job_id] = {"status": "pending"}

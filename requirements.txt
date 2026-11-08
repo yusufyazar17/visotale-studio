@@ -3,3 +3,5 @@ uvicorn[standard]
 requests
 pillow
 python-multipart
+numpy
+opencv-python-headless<5
