@@ -67,7 +67,7 @@ details summary{cursor:pointer;font-size:13.5px;color:var(--gm);font-weight:500}
   <div class="sec"><details><summary>Gelişmiş ayarlar</summary>
     <label class="l">Prompt (bu stile özel, düzenleyebilirsin)</label><textarea id="prompt"></textarea>
     <label class="l">Negatif prompt</label><textarea id="neg"></textarea>
-    <label class="l">Model</label><select id="engine"><option value="flux">Flux (yeni, prompta daha sadık)</option><option value="illusion">İllüzyon (eski)</option></select>
+    <label class="l">Model</label><select id="engine"><option value="illusion">İllüzyon (çalışan)</option><option value="flux">Flux (deneysel, illüzyon üretmiyor)</option></select>
     <label class="l">Flux kontrol modu</label><select id="mode"><option value="blur">blur (önerilen)</option><option value="tile">tile</option><option value="low-quality">low-quality</option><option value="gray">gray (fotoğrafı kopyalar)</option></select>
     <label class="l">Kontrol görselini bulanıklaştır (px, yüksek = yüz daha gizli)</label><input id="blur" type="number" min="0" max="40" value="8">
     <label class="l">Kontrol bitiş oranı (düşük = prompt daha özgür, 0.3-1.0)</label><input id="cnend" type="number" step="0.05" min="0.2" max="1" value="0.65">

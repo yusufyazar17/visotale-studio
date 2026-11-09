@@ -223,7 +223,7 @@ async def generate(
         "negative": (negative_prompt or "").strip()[:2000] or base["negative"],
         "scale": clamp(conditioning_scale, 0.5, 1.6, base["scale"]),
         "flux_scale": clamp(base.get("flux_scale", 0.6) + clamp(delta, -0.3, 0.3, 0.0) * 2, 0.2, 1.2, 0.65),
-        "engine": engine if engine in ("flux", "illusion") else "flux",
+        "engine": engine if engine in ("flux", "illusion") else "illusion",
         "mode": mode if mode in ("blur", "tile", "low-quality", "gray", "depth", "canny") else "blur",
         "cn_end": clamp(cn_end, 0.2, 1.0, 0.65),
         "blur": clamp(blur, 0, 40, 8),
