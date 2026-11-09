@@ -21,6 +21,8 @@ FAL_KEY = os.environ.get("FAL_KEY", "")
 PASSWORD = os.environ.get("TEST_PASSWORD", "")
 MAX_RUNS = int(os.environ.get("MAX_RUNS", "300"))
 FAL_URL = "https://queue.fal.run/fal-ai/illusion-diffusion"
+MODAL_URL = os.environ.get("MODAL_URL", "")
+MODAL_SECRET = os.environ.get("MODAL_SECRET", "")
 FLUX_URL = "https://queue.fal.run/fal-ai/flux-general"
 FLUX_CN = os.environ.get("FLUX_CONTROLNET", "Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro")
 MAX_UPLOAD = 20 * 1024 * 1024
@@ -119,9 +121,39 @@ def run_hybrid(job_id: str, raw: bytes, p: dict):
         JOBS[job_id] = {"status": "error", "error": str(e)}
 
 
+def run_sdxl(job_id: str, raw: bytes, p: dict):
+    """SDXL + QR Monster (Modal GPU). Soğuk açılışta ilk istek ~1 dk sürebilir."""
+    try:
+        if not MODAL_URL or not MODAL_SECRET:
+            raise RuntimeError("MODAL_URL / MODAL_SECRET tanımlı değil (Railway Variables).")
+        cond = build_conditioning(raw, p)
+        body = {
+            "secret": MODAL_SECRET,
+            "image_b64": cond.split(",", 1)[1],
+            "prompt": strip_weights(p["prompt"]),
+            "negative_prompt": strip_weights(p["negative"]),
+            "scale": p["sdxl_scale"],
+            "end": p["cn_end"],
+            "steps": p["steps"] if p["steps"] >= 25 else 30,
+            "guidance": p["guidance"] if p["guidance"] <= 9 else 7.0,
+        }
+        r = requests.post(MODAL_URL, json=body, timeout=280)
+        if not r.ok:
+            raise RuntimeError(f"Modal hata {r.status_code}: {r.text[:300]}")
+        data = base64.b64decode(r.json()["image_b64"])
+        RESULTS[job_id] = data
+        while len(RESULTS) > 40:
+            RESULTS.pop(next(iter(RESULTS)))
+        JOBS[job_id] = {"status": "done", "image_url": f"/api/result/{job_id}.jpg"}
+    except Exception as e:  # noqa: BLE001
+        JOBS[job_id] = {"status": "error", "error": str(e)}
+
+
 def run_job(job_id: str, raw: bytes, p: dict):
     if p["engine"] == "hibrit":
         return run_hybrid(job_id, raw, p)
+    if p["engine"] == "sdxl":
+        return run_sdxl(job_id, raw, p)
     try:
         if not FAL_KEY:
             raise RuntimeError("FAL_KEY tanımlı değil.")
@@ -245,9 +277,10 @@ async def generate(
         "scale": clamp(conditioning_scale, 0.5, 1.6, base["scale"]),
         "flux_scale": clamp(base.get("flux_scale", 0.6) + clamp(delta, -0.3, 0.3, 0.0) * 2, 0.2, 1.2, 0.65),
         "style": style,
+        "sdxl_scale": clamp(base.get("sdxl_scale", 1.0) + clamp(delta, -0.3, 0.3, 0.0) * 3, 0.4, 1.8, 1.0),
         "hy_strength": clamp(clamp(hy_strength, 5, 60, 38) + clamp(delta, -0.3, 0.3, 0.0) * 100, 5, 60, 38),
         "hy_sigma": clamp(hy_sigma, 3, 30, 12),
-        "engine": engine if engine in ("flux", "illusion", "hibrit") else base.get("engine", "illusion"),
+        "engine": engine if engine in ("flux", "illusion", "hibrit", "sdxl") else base.get("engine", "illusion"),
         "mode": mode if mode in ("blur", "tile", "low-quality", "gray", "depth", "canny") else "blur",
         "cn_end": clamp(cn_end, 0.2, 1.0, 0.65),
         "blur": clamp(blur, 0, 40, 8),

@@ -28,12 +28,18 @@ STYLES = {
     },
     "kirmizi_gul": {
         "label": "Kırmızı Güller",
-        "engine": "hibrit",  # hazır tablo (kirmizi_gul.jpg) + fotoğraf
-        "template": "kirmizi_gul.jpg",
-        "region": {"cx": 0.50, "cy": 0.36, "w": 0.90, "h": 0.52},  # buket elipsi (tablo boyutunun oranı)
-        "prompt": "(hibrit modda kullanılmaz)",
-        "negative": "",
-        "scale": 1.15, "guidance": 7.5, "steps": 20,
+        "engine": "sdxl",
+        "template": "kirmizi_gul.jpg",  # hibrit model için (isteğe bağlı)
+        "region": {"cx": 0.50, "cy": 0.36, "w": 0.90, "h": 0.52},
+        "prompt": (
+            "impressionist oil painting with visible brush strokes, a lush round "
+            "bouquet of deep red roses with green leaves in a cream white "
+            "ceramic vase, fallen red rose petals on a warm wooden table, "
+            "golden brown painterly background, masterpiece"
+        ),
+        "negative": "white roses, yellow roses, pink roses, blue vase, glass vase, photograph, text, watermark, signature, people, frame",
+        "sdxl_scale": 1.0,
+        "scale": 1.15, "guidance": 7.0, "steps": 30,
         "layout": "cutout",
         "layout_params": {"cx": 0.50, "cy": 0.38, "w": 0.88, "h": 0.66, "feather": 0.10, "bg": 24, "size": 0.68, "halo": 150, "dy": 0.02, "pad_top": 1.0, "fit": 0.92},
     },
