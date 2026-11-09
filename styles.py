@@ -29,16 +29,14 @@ STYLES = {
     "kirmizi_gul": {
         "label": "Kırmızı Güller",
         "prompt": (
-            "(all red roses:1.4), impressionist oil painting with thick palette "
-            "knife strokes, still life of a lush round bouquet made only of "
-            "vivid crimson red roses with deep green leaves, in a round "
-            "cream-white opaque ceramic vase, a fallen red rose and red petals "
-            "on a warm golden-brown wooden table, warm ochre gold and umber "
-            "background with soft blue-gray patches, loose visible brushwork, "
-            "rich saturated red, painting not photograph"
+            "impressionist oil painting, thick palette knife strokes, bouquet "
+            "of red roses, only red roses, crimson red roses with green "
+            "leaves, in a round white ceramic vase, red petals on a golden "
+            "brown wooden table, warm ochre gold background, rich saturated "
+            "red, painting not photograph"
         ),
-        "negative": NEGATIVE_BASE + ", white roses, cream roses, yellow roses, orange roses, pink roses, yellow small flowers, wildflowers, glass vase, transparent vase, studio photo, smooth digital art, sharp realistic details, pastel, picture frame, border, second vase, cold dark background",
-        "scale": 1.0, "guidance": 8.5, "steps": 25,
+        "negative": "white roses, yellow roses, orange roses, pink roses, glass vase, transparent vase, wildflowers, photograph, text, watermark, blurry, picture frame, border, people",
+        "scale": 1.15, "guidance": 7.5, "steps": 20,
         "layout": "cutout",
         "layout_params": {"cx": 0.50, "cy": 0.38, "w": 0.88, "h": 0.66, "feather": 0.10, "bg": 24, "size": 0.68, "halo": 150, "dy": 0.02, "pad_top": 1.0, "fit": 0.92},
     },
