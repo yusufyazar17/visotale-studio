@@ -85,6 +85,18 @@ def build_conditioning(raw: bytes, p: dict) -> str:
     return prepare(raw)
 
 
+def blur_data_uri(uri: str, radius: float) -> str:
+    """Kontrol görselini bulanıklaştır: Flux ince ayrıntıyı kopyalayamasın, sadece açık/koyu kütleleri izlesin."""
+    if radius <= 0:
+        return uri
+    from PIL import ImageFilter
+    img = Image.open(io.BytesIO(base64.b64decode(uri.split(",", 1)[1]))).convert("RGB")
+    img = img.filter(ImageFilter.GaussianBlur(radius))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=92)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
 def strip_weights(s: str) -> str:
     """Flux (T5) '(metin:1.4)' ağırlık sözdizimini anlamaz; parantezi ve ağırlığı at."""
     return re.sub(r"\(([^()]*?):\s*[0-9.]+\)", r"\1", s)
@@ -96,6 +108,7 @@ def run_job(job_id: str, raw: bytes, p: dict):
             raise RuntimeError("FAL_KEY tanımlı değil.")
         cond = build_conditioning(raw, p)
         if p["engine"] == "flux":
+            cond = blur_data_uri(cond, p["blur"])
             url_q = FLUX_URL
             payload = {
                 "prompt": strip_weights(p["prompt"]),
@@ -106,11 +119,11 @@ def run_job(job_id: str, raw: bytes, p: dict):
                 "controlnet_unions": [{
                     "path": FLUX_CN,
                     "controls": [{
-                        "control_mode": "gray",
+                        "control_mode": p["mode"],
                         "control_image_url": cond,
                         "conditioning_scale": p["flux_scale"],
                         "start_percentage": 0.0,
-                        "end_percentage": 0.8,
+                        "end_percentage": p["cn_end"],
                     }],
                 }],
             }
@@ -182,7 +195,8 @@ async def generate(
     password: str = Form(...), style: str = Form(...), file: UploadFile = File(...),
     prompt: str | None = Form(None), negative_prompt: str | None = Form(None),
     conditioning_scale: str | None = Form(None), delta: str | None = Form(None),
-    engine: str | None = Form(None), guidance_scale: str | None = Form(None),
+    engine: str | None = Form(None), mode: str | None = Form(None),
+    cn_end: str | None = Form(None), blur: str | None = Form(None), guidance_scale: str | None = Form(None),
     num_inference_steps: str | None = Form(None), layout: str | None = Form(None),
 ):
     global RUNS
@@ -208,8 +222,11 @@ async def generate(
         "prompt": (prompt or "").strip()[:2000] or base["prompt"],
         "negative": (negative_prompt or "").strip()[:2000] or base["negative"],
         "scale": clamp(conditioning_scale, 0.5, 1.6, base["scale"]),
-        "flux_scale": clamp(base.get("flux_scale", 0.65) + clamp(delta, -0.3, 0.3, 0.0) * 2, 0.2, 1.2, 0.65),
+        "flux_scale": clamp(base.get("flux_scale", 0.6) + clamp(delta, -0.3, 0.3, 0.0) * 2, 0.2, 1.2, 0.65),
         "engine": engine if engine in ("flux", "illusion") else "flux",
+        "mode": mode if mode in ("blur", "tile", "low-quality", "gray", "depth", "canny") else "blur",
+        "cn_end": clamp(cn_end, 0.2, 1.0, 0.65),
+        "blur": clamp(blur, 0, 40, 8),
         "guidance": clamp(guidance_scale, 1, 20, base["guidance"]),
         "steps": int(clamp(num_inference_steps, 10, 50, base["steps"])),
         "layout": layout if layout in ("cutout", "none") else base.get("layout", "none"),

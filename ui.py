@@ -68,6 +68,9 @@ details summary{cursor:pointer;font-size:13.5px;color:var(--gm);font-weight:500}
     <label class="l">Prompt (bu stile özel, düzenleyebilirsin)</label><textarea id="prompt"></textarea>
     <label class="l">Negatif prompt</label><textarea id="neg"></textarea>
     <label class="l">Model</label><select id="engine"><option value="flux">Flux (yeni, prompta daha sadık)</option><option value="illusion">İllüzyon (eski)</option></select>
+    <label class="l">Flux kontrol modu</label><select id="mode"><option value="blur">blur (önerilen)</option><option value="tile">tile</option><option value="low-quality">low-quality</option><option value="gray">gray (fotoğrafı kopyalar)</option></select>
+    <label class="l">Kontrol görselini bulanıklaştır (px, yüksek = yüz daha gizli)</label><input id="blur" type="number" min="0" max="40" value="8">
+    <label class="l">Kontrol bitiş oranı (düşük = prompt daha özgür, 0.3-1.0)</label><input id="cnend" type="number" step="0.05" min="0.2" max="1" value="0.65">
     <label class="l">Yüz yerleşimi</label><select id="layout"><option value="cutout">Arka planı sil + oval (önerilen)</option><option value="none">Tüm tuval</option></select>
     <label class="l">Adım sayısı</label><input id="steps" type="number" min="10" max="50" value="20">
     <label class="l">Guidance</label><input id="guid" type="number" step="0.5" value="7.5">
@@ -110,7 +113,7 @@ $('go').onclick=function(){
  msg('Tablon hazırlanıyor… (30-60 sn sürebilir)',false,true);
  function one(){var fd=new FormData();fd.append('password',$('pw').value);fd.append('style',cur);fd.append('file',file);
   fd.append('prompt',$('prompt').value);fd.append('negative_prompt',$('neg').value);
-  fd.append('conditioning_scale',(DEF[cur].conditioning_scale+delta).toFixed(2));fd.append('delta',delta);fd.append('engine',$('engine').value);
+  fd.append('conditioning_scale',(DEF[cur].conditioning_scale+delta).toFixed(2));fd.append('delta',delta);fd.append('engine',$('engine').value);fd.append('mode',$('mode').value);fd.append('blur',$('blur').value);fd.append('cn_end',$('cnend').value);
   fd.append('guidance_scale',$('guid').value);fd.append('layout',$('layout').value);fd.append('num_inference_steps',$('steps').value);
   
   fetch('/api/generate',{method:'POST',body:fd}).then(function(r){return r.json().then(function(j){return{s:r.status,b:j}})}).then(function(x){
