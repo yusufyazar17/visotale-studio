@@ -29,19 +29,21 @@ STYLES = {
     "antika_sakayik": {
         "label": "Antika Şakayıklar",
         "prompt": (
-            "romantic antique oil painting, still life of a lush overflowing "
-            "bouquet of large ruffled pink and cream-white peonies with "
-            "olive-green leaves, in a graceful teal-blue patinated ceramic "
-            "amphora vase with two small handles, on an ornate carved gilded "
-            "rococo round wooden table, a rolled aged parchment scroll, "
-            "old blank paper sheets, a white feather quill in a dark green "
-            "glass inkwell, a fallen pink peony and a loose pink silk ribbon "
-            "on the table, warm mottled ochre-brown and umber weathered "
-            "plaster wall behind, soft golden candlelight glow, painterly "
-            "craquelure texture, rich warm tones, old masters atmosphere, "
-            "painting not photograph"
+            "masterpiece romantic baroque oil painting, still life with a huge "
+            "lush bouquet of ruffled pink and cream-white peonies with olive "
+            "green leaves and a few round pink peony buds, in a graceful "
+            "teal-blue patinated ceramic amphora vase with two small curled "
+            "handles and an ornate footed base, standing on an antique carved "
+            "gilded rococo round wooden table with polished dark walnut top, "
+            "on the table a rolled aged parchment scroll, old blank paper "
+            "sheets with a red wax seal, a white feather quill in a dark green "
+            "glass inkwell, an antique silver letter knife, one fallen pink "
+            "peony and a loose pink silk ribbon, warm mottled ochre brown and "
+            "umber weathered plaster wall, soft golden candlelight glow, "
+            "painterly craquelure texture, rich warm old masters tones, "
+            "highly detailed, painting not photograph"
         ),
-        "negative": NEGATIVE_BASE + ", studio photo, smooth digital art, bright white background, neon colors, modern, picture frame, border, second vase, cold blue wall",
+        "negative": NEGATIVE_BASE + ", studio photo, smooth digital art, bright white background, neon colors, modern, picture frame, border, second vase, cold blue wall, readable writing, letters",
         "scale": 1.15, "guidance": 7.5, "steps": 20,
         "layout": "cutout",
         "layout_params": {"cx": 0.50, "cy": 0.38, "w": 0.88, "h": 0.66, "feather": 0.10, "bg": 24, "size": 0.68, "halo": 150, "dy": 0.02, "pad_top": 1.0, "fit": 0.92},
