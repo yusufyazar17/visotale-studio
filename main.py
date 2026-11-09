@@ -6,7 +6,7 @@ Gerekli ortam değişkenleri (Railway → Variables):
   MAX_RUNS       (isteğe bağlı) en fazla üretim sayısı, varsayılan 300
 Adresler: /studio (arayüz), /health
 """
-import base64, hmac, io, json, os, threading, time, uuid
+import base64, hmac, io, json, os, re, threading, time, uuid
 
 import requests
 from fastapi import FastAPI, File, Form, UploadFile
@@ -21,6 +21,8 @@ FAL_KEY = os.environ.get("FAL_KEY", "")
 PASSWORD = os.environ.get("TEST_PASSWORD", "")
 MAX_RUNS = int(os.environ.get("MAX_RUNS", "300"))
 FAL_URL = "https://queue.fal.run/fal-ai/illusion-diffusion"
+FLUX_URL = "https://queue.fal.run/fal-ai/flux-general"
+FLUX_CN = os.environ.get("FLUX_CONTROLNET", "Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro")
 MAX_UPLOAD = 20 * 1024 * 1024
 
 app = FastAPI()
@@ -83,22 +85,49 @@ def build_conditioning(raw: bytes, p: dict) -> str:
     return prepare(raw)
 
 
+def strip_weights(s: str) -> str:
+    """Flux (T5) '(metin:1.4)' ağırlık sözdizimini anlamaz; parantezi ve ağırlığı at."""
+    return re.sub(r"\(([^()]*?):\s*[0-9.]+\)", r"\1", s)
+
+
 def run_job(job_id: str, raw: bytes, p: dict):
     try:
         if not FAL_KEY:
             raise RuntimeError("FAL_KEY tanımlı değil.")
-        payload = {
-            "image_url": build_conditioning(raw, p),
-            "prompt": p["prompt"],
-            "negative_prompt": p["negative"],
-            "controlnet_conditioning_scale": p["scale"],
-            "guidance_scale": p["guidance"],
-            "num_inference_steps": p["steps"],
-            "control_guidance_end": 1.0,
-            "image_size": "square_hd",
-        }
+        cond = build_conditioning(raw, p)
+        if p["engine"] == "flux":
+            url_q = FLUX_URL
+            payload = {
+                "prompt": strip_weights(p["prompt"]),
+                "image_size": "square_hd",
+                "num_inference_steps": 28,
+                "guidance_scale": 3.5,
+                "output_format": "jpeg",
+                "controlnet_unions": [{
+                    "path": FLUX_CN,
+                    "controls": [{
+                        "control_mode": "gray",
+                        "control_image_url": cond,
+                        "conditioning_scale": p["flux_scale"],
+                        "start_percentage": 0.0,
+                        "end_percentage": 0.8,
+                    }],
+                }],
+            }
+        else:
+            url_q = FAL_URL
+            payload = {
+                "image_url": cond,
+                "prompt": p["prompt"],
+                "negative_prompt": p["negative"],
+                "controlnet_conditioning_scale": p["scale"],
+                "guidance_scale": p["guidance"],
+                "num_inference_steps": p["steps"],
+                "control_guidance_end": 1.0,
+                "image_size": "square_hd",
+            }
         h = {"Authorization": f"Key {FAL_KEY}", "Content-Type": "application/json"}
-        sub = requests.post(FAL_URL, json=payload, headers=h, timeout=30)
+        sub = requests.post(url_q, json=payload, headers=h, timeout=30)
         if not sub.ok:
             raise RuntimeError(f"fal hata {sub.status_code}: {sub.text[:300]}")
         d = sub.json()
@@ -152,7 +181,8 @@ def studio():
 async def generate(
     password: str = Form(...), style: str = Form(...), file: UploadFile = File(...),
     prompt: str | None = Form(None), negative_prompt: str | None = Form(None),
-    conditioning_scale: str | None = Form(None), guidance_scale: str | None = Form(None),
+    conditioning_scale: str | None = Form(None), delta: str | None = Form(None),
+    engine: str | None = Form(None), guidance_scale: str | None = Form(None),
     num_inference_steps: str | None = Form(None), layout: str | None = Form(None),
 ):
     global RUNS
@@ -178,6 +208,8 @@ async def generate(
         "prompt": (prompt or "").strip()[:2000] or base["prompt"],
         "negative": (negative_prompt or "").strip()[:2000] or base["negative"],
         "scale": clamp(conditioning_scale, 0.5, 1.6, base["scale"]),
+        "flux_scale": clamp(base.get("flux_scale", 0.65) + clamp(delta, -0.3, 0.3, 0.0) * 2, 0.2, 1.2, 0.65),
+        "engine": engine if engine in ("flux", "illusion") else "flux",
         "guidance": clamp(guidance_scale, 1, 20, base["guidance"]),
         "steps": int(clamp(num_inference_steps, 10, 50, base["steps"])),
         "layout": layout if layout in ("cutout", "none") else base.get("layout", "none"),
