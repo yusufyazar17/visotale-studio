@@ -26,24 +26,19 @@ STYLES = {
         "layout": "cutout",
         "layout_params": {"cx": 0.50, "cy": 0.38, "w": 0.88, "h": 0.66, "feather": 0.10, "bg": 24, "size": 0.68, "halo": 150, "dy": 0.02, "pad_top": 1.0, "fit": 0.92},
     },
-    "antika_sakayik": {
-        "label": "Antika Şakayıklar",
+    "kirmizi_gul": {
+        "label": "Kırmızı Güller",
         "prompt": (
-            "masterpiece romantic baroque oil painting, still life with a huge "
-            "lush bouquet of ruffled pink and cream-white peonies with olive "
-            "green leaves and a few round pink peony buds, in a graceful "
-            "teal-blue patinated ceramic amphora vase with two small curled "
-            "handles and an ornate footed base, standing on an antique carved "
-            "gilded rococo round wooden table with polished dark walnut top, "
-            "on the table a rolled aged parchment scroll, old blank paper "
-            "sheets with a red wax seal, a white feather quill in a dark green "
-            "glass inkwell, an antique silver letter knife, one fallen pink "
-            "peony and a loose pink silk ribbon, warm mottled ochre brown and "
-            "umber weathered plaster wall, soft golden candlelight glow, "
-            "painterly craquelure texture, rich warm old masters tones, "
-            "highly detailed, painting not photograph"
+            "impressionist oil painting with thick palette knife strokes, "
+            "still life of a lush round bouquet of vivid red roses with deep "
+            "green leaves and a few small buds, in a round cream-white glazed "
+            "ceramic vase with soft golden reflections, a fallen red rose and "
+            "scattered red petals on a warm golden-brown wooden table, warm "
+            "ochre gold and umber background with soft blue-gray patches, "
+            "loose visible brushwork, rich saturated reds, warm sunlight, "
+            "painting not photograph"
         ),
-        "negative": NEGATIVE_BASE + ", studio photo, smooth digital art, bright white background, neon colors, modern, picture frame, border, second vase, cold blue wall, readable writing, letters",
+        "negative": NEGATIVE_BASE + ", studio photo, smooth digital art, sharp realistic details, pastel, pink roses, picture frame, border, second vase, cold dark background",
         "scale": 1.15, "guidance": 7.5, "steps": 20,
         "layout": "cutout",
         "layout_params": {"cx": 0.50, "cy": 0.38, "w": 0.88, "h": 0.66, "feather": 0.10, "bg": 24, "size": 0.68, "halo": 150, "dy": 0.02, "pad_top": 1.0, "fit": 0.92},
