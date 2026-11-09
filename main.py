@@ -10,7 +10,7 @@ import base64, hmac, io, json, os, re, threading, time, uuid
 
 import requests
 from fastapi import FastAPI, File, Form, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from PIL import Image, ImageOps
 
 from styles import STYLES
@@ -27,6 +27,7 @@ MAX_UPLOAD = 20 * 1024 * 1024
 
 app = FastAPI()
 JOBS: dict = {}
+RESULTS: dict = {}   # hibrit sonuçları (bellekte, son 40)
 LOCK = threading.Lock()
 RUNS = 0
 
@@ -102,7 +103,25 @@ def strip_weights(s: str) -> str:
     return re.sub(r"\(([^()]*?):\s*[0-9.]+\)", r"\1", s)
 
 
+def run_hybrid(job_id: str, raw: bytes, p: dict):
+    try:
+        import hybrid
+        style = STYLES[p["style"]]
+        img = hybrid.hybridize(
+            raw, style["template"], style["region"], style.get("hy_layout") or style.get("layout_params"),
+            strength=p["hy_strength"], sigma=p["hy_sigma"],
+        )
+        RESULTS[job_id] = hybrid.to_jpeg_bytes(img)
+        while len(RESULTS) > 40:
+            RESULTS.pop(next(iter(RESULTS)))
+        JOBS[job_id] = {"status": "done", "image_url": f"/api/result/{job_id}.jpg"}
+    except Exception as e:  # noqa: BLE001
+        JOBS[job_id] = {"status": "error", "error": str(e)}
+
+
 def run_job(job_id: str, raw: bytes, p: dict):
+    if p["engine"] == "hibrit":
+        return run_hybrid(job_id, raw, p)
     try:
         if not FAL_KEY:
             raise RuntimeError("FAL_KEY tanımlı değil.")
@@ -183,6 +202,7 @@ def studio():
             "conditioning_scale": v["scale"], "guidance_scale": v["guidance"],
             "num_inference_steps": v["steps"], "control_guidance_end": 1.0,
             "layout": v.get("layout", "none"),
+            "engine": v.get("engine", "illusion"),
         }
         for k, v in STYLES.items()
     }
@@ -196,7 +216,8 @@ async def generate(
     prompt: str | None = Form(None), negative_prompt: str | None = Form(None),
     conditioning_scale: str | None = Form(None), delta: str | None = Form(None),
     engine: str | None = Form(None), mode: str | None = Form(None),
-    cn_end: str | None = Form(None), blur: str | None = Form(None), guidance_scale: str | None = Form(None),
+    cn_end: str | None = Form(None), hy_strength: str | None = Form(None),
+    hy_sigma: str | None = Form(None), blur: str | None = Form(None), guidance_scale: str | None = Form(None),
     num_inference_steps: str | None = Form(None), layout: str | None = Form(None),
 ):
     global RUNS
@@ -223,7 +244,10 @@ async def generate(
         "negative": (negative_prompt or "").strip()[:2000] or base["negative"],
         "scale": clamp(conditioning_scale, 0.5, 1.6, base["scale"]),
         "flux_scale": clamp(base.get("flux_scale", 0.6) + clamp(delta, -0.3, 0.3, 0.0) * 2, 0.2, 1.2, 0.65),
-        "engine": engine if engine in ("flux", "illusion") else "illusion",
+        "style": style,
+        "hy_strength": clamp(clamp(hy_strength, 5, 60, 38) + clamp(delta, -0.3, 0.3, 0.0) * 100, 5, 60, 38),
+        "hy_sigma": clamp(hy_sigma, 3, 30, 12),
+        "engine": engine if engine in ("flux", "illusion", "hibrit") else base.get("engine", "illusion"),
         "mode": mode if mode in ("blur", "tile", "low-quality", "gray", "depth", "canny") else "blur",
         "cn_end": clamp(cn_end, 0.2, 1.0, 0.65),
         "blur": clamp(blur, 0, 40, 8),
@@ -236,6 +260,14 @@ async def generate(
     JOBS[job_id] = {"status": "pending"}
     threading.Thread(target=run_job, args=(job_id, raw, p), daemon=True).start()
     return {"ok": True, "job_id": job_id}
+
+
+@app.get("/api/result/{name}")
+def result(name: str):
+    data = RESULTS.get(name.rsplit(".", 1)[0])
+    if not data:
+        return JSONResponse(status_code=404, content={"ok": False})
+    return Response(content=data, media_type="image/jpeg")
 
 
 @app.get("/api/job/{job_id}")

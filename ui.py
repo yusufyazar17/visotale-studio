@@ -67,7 +67,9 @@ details summary{cursor:pointer;font-size:13.5px;color:var(--gm);font-weight:500}
   <div class="sec"><details><summary>Gelişmiş ayarlar</summary>
     <label class="l">Prompt (bu stile özel, düzenleyebilirsin)</label><textarea id="prompt"></textarea>
     <label class="l">Negatif prompt</label><textarea id="neg"></textarea>
-    <label class="l">Model</label><select id="engine"><option value="illusion">İllüzyon (çalışan)</option><option value="flux">Flux (deneysel, illüzyon üretmiyor)</option></select>
+    <label class="l">Model</label><select id="engine"><option value="hibrit">Hibrit (hazır tablo + fotoğraf)</option><option value="illusion">İllüzyon (çalışan)</option><option value="flux">Flux (deneysel, illüzyon üretmiyor)</option></select>
+    <label class="l">Hibrit: yüz gücü (yüksek = gözünü kısınca daha belirgin, ama yakından da görünür)</label><input id="hys" type="number" min="5" max="60" value="38">
+    <label class="l">Hibrit: yumuşaklık (px, yüksek = yüz daha geniş/yumuşak, tablo detayı korunur)</label><input id="hysig" type="number" min="3" max="30" value="12">
     <label class="l">Flux kontrol modu</label><select id="mode"><option value="blur">blur (önerilen)</option><option value="tile">tile</option><option value="low-quality">low-quality</option><option value="gray">gray (fotoğrafı kopyalar)</option></select>
     <label class="l">Kontrol görselini bulanıklaştır (px, yüksek = yüz daha gizli)</label><input id="blur" type="number" min="0" max="40" value="8">
     <label class="l">Kontrol bitiş oranı (düşük = prompt daha özgür, 0.3-1.0)</label><input id="cnend" type="number" step="0.05" min="0.2" max="1" value="0.65">
@@ -91,7 +93,7 @@ var cur=STYLES.length?STYLES[0].key:null, delta=0, file=null, hist=[];
 try{$('pw').value=sessionStorage.getItem('vpw')||''}catch(e){}
 function renderStyles(){var h='';STYLES.forEach(function(s){h+='<button class="sty'+(s.key===cur?' on':'')+'" data-k="'+s.key+'">'+s.label+'</button>'});$('styles').innerHTML=h;
  Array.prototype.forEach.call($('styles').children,function(b){b.onclick=function(){cur=b.dataset.k;renderStyles();loadDef()}})}
-function loadDef(){var d=DEF[cur];if(!d)return;$('prompt').value=d.prompt;$('neg').value=d.negative_prompt;$('steps').value=d.num_inference_steps;$('guid').value=d.guidance_scale}
+function loadDef(){var d=DEF[cur];if(!d)return;$('prompt').value=d.prompt;$('neg').value=d.negative_prompt;$('steps').value=d.num_inference_steps;$('guid').value=d.guidance_scale;$('engine').value=d.engine||'illusion'}
 renderStyles();loadDef();
 Array.prototype.forEach.call($('seg').children,function(b){b.onclick=function(){Array.prototype.forEach.call($('seg').children,function(x){x.classList.remove('on')});b.classList.add('on');delta=parseFloat(b.dataset.d)}});
 var drop=$('drop');drop.onclick=function(){$('file').click()};
@@ -113,7 +115,7 @@ $('go').onclick=function(){
  msg('Tablon hazırlanıyor… (30-60 sn sürebilir)',false,true);
  function one(){var fd=new FormData();fd.append('password',$('pw').value);fd.append('style',cur);fd.append('file',file);
   fd.append('prompt',$('prompt').value);fd.append('negative_prompt',$('neg').value);
-  fd.append('conditioning_scale',(DEF[cur].conditioning_scale+delta).toFixed(2));fd.append('delta',delta);fd.append('engine',$('engine').value);fd.append('mode',$('mode').value);fd.append('blur',$('blur').value);fd.append('cn_end',$('cnend').value);
+  fd.append('conditioning_scale',(DEF[cur].conditioning_scale+delta).toFixed(2));fd.append('delta',delta);fd.append('engine',$('engine').value);fd.append('mode',$('mode').value);fd.append('hy_strength',$('hys').value);fd.append('hy_sigma',$('hysig').value);fd.append('blur',$('blur').value);fd.append('cn_end',$('cnend').value);
   fd.append('guidance_scale',$('guid').value);fd.append('layout',$('layout').value);fd.append('num_inference_steps',$('steps').value);
   
   fetch('/api/generate',{method:'POST',body:fd}).then(function(r){return r.json().then(function(j){return{s:r.status,b:j}})}).then(function(x){
