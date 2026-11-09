@@ -38,7 +38,7 @@ STYLES = {
             "golden brown painterly background, masterpiece"
         ),
         "negative": "white roses, yellow roses, pink roses, blue vase, glass vase, photograph, text, watermark, signature, people, frame",
-        "sdxl_scale": 1.0,
+        "sdxl_scale": 1.15,
         "scale": 1.15, "guidance": 7.0, "steps": 30,
         "layout": "cutout",
         "layout_params": {"cx": 0.50, "cy": 0.38, "w": 0.88, "h": 0.66, "feather": 0.10, "bg": 24, "size": 0.68, "halo": 150, "dy": 0.02, "pad_top": 1.0, "fit": 0.92},

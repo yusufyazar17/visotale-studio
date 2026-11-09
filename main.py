@@ -277,7 +277,7 @@ async def generate(
         "scale": clamp(conditioning_scale, 0.5, 1.6, base["scale"]),
         "flux_scale": clamp(base.get("flux_scale", 0.6) + clamp(delta, -0.3, 0.3, 0.0) * 2, 0.2, 1.2, 0.65),
         "style": style,
-        "sdxl_scale": clamp(base.get("sdxl_scale", 1.0) + clamp(delta, -0.3, 0.3, 0.0) * 3, 0.4, 1.8, 1.0),
+        "sdxl_scale": clamp(base.get("sdxl_scale", 1.0) + clamp(delta, -0.3, 0.3, 0.0) * 1.5, 0.4, 1.8, 1.0),
         "hy_strength": clamp(clamp(hy_strength, 5, 60, 38) + clamp(delta, -0.3, 0.3, 0.0) * 100, 5, 60, 38),
         "hy_sigma": clamp(hy_sigma, 3, 30, 12),
         "engine": engine if engine in ("flux", "illusion", "hibrit", "sdxl") else base.get("engine", "illusion"),
