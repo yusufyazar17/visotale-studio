@@ -28,8 +28,8 @@ STYLES = {
     },
     "kirmizi_gul": {
         "label": "Kırmızı Güller",
-        "engine": "hibrit",  # hazır tablo (templates/kirmizi_gul.jpg) + fotoğraf
-        "template": "templates/kirmizi_gul.jpg",
+        "engine": "hibrit",  # hazır tablo (kirmizi_gul.jpg) + fotoğraf
+        "template": "kirmizi_gul.jpg",
         "region": {"cx": 0.50, "cy": 0.36, "w": 0.90, "h": 0.52},  # buket elipsi (tablo boyutunun oranı)
         "prompt": "(hibrit modda kullanılmaz)",
         "negative": "",
